@@ -7,22 +7,24 @@
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Leaflet CSS and JS for interactive map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha2d-J0y9v8xX+vY2Fz2x/7mF/4iE8yR/z3A3+vY/Y2Fz2x/7mF/4iE8yR/z3A3+" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha2d-J0y9v8xX+vY2Fz2x/7mF/4iE8yR/z3A3+vY/Y2Fz2x/7mF/4iE8yR/z3A3+" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <!-- Load Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* Define Inter font as a fallback */
+        .font-inter { font-family: 'Inter', sans-serif; }
         /* Custom styles for map and responsive containers */
-        #map { height: 350px; border-radius: 0.5rem; }
+        #map { height: 400px; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .tab-button.active {
-            background-color: #4f46e5;
+            background-color: #4f46e5; /* indigo-600 */
             color: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         .loading-ring {
-            width: 2rem;
-            height: 2rem;
-            border: 4px solid #4f46e5;
+            width: 2.5rem;
+            height: 2.5rem;
+            border: 5px solid #4f46e5;
             border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -32,139 +34,161 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 font-sans antialiased">
+<body class="bg-gray-100 font-inter antialiased">
 
     <!-- Main Application Container -->
-    <div id="app" class="min-h-screen p-4 sm:p-8">
+    <div id="app" class="min-h-screen p-4 sm:p-8 max-w-7xl mx-auto">
 
-        <!-- Header -->
-        <header class="mb-8 border-b pb-4">
-            <h1 class="text-3xl font-extrabold text-indigo-700">Live Event Hub </h1>
-            <p id="auth-status" class="text-sm text-gray-500 mt-1">Status: Initializing...</p>
+        <!-- Header and Auth Status -->
+        <header class="mb-8 border-b border-indigo-100 pb-4 flex justify-between items-center">
+            <h1 class="text-3xl font-extrabold text-indigo-700">Live Event Hub</h1>
+            <p id="auth-status" class="text-sm text-gray-500 mt-1 p-2 bg-white rounded-lg shadow-sm">Status: Initializing...</p>
         </header>
 
         <!-- Loading Indicator -->
-        <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
-            <div class="loading-ring"></div>
-            <p class="ml-3 text-lg text-indigo-600">Loading event data...</p>
+        <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
+            <div class="flex items-center">
+                <div class="loading-ring"></div>
+                <p class="ml-4 text-xl font-medium text-indigo-600">Loading real-time data...</p>
+            </div>
         </div>
 
         <!-- Main Content (hidden until loaded) -->
-        <div id="main-content" class="hidden">
+        <div id="main-content" class="hidden pb-12">
             
-            <!-- Filters & Navigation -->
-            <div class="mb-6 p-4 bg-white rounded-xl shadow-lg flex flex-col md:flex-row gap-4">
+            <!-- Filters -->
+            <div class="mb-6 p-5 bg-white rounded-xl shadow-xl flex flex-col md:flex-row gap-4">
                 <input type="text" id="search-input" placeholder="Search events by name or description..."
-                       class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
-                <select id="type-filter" class="p-3 border border-gray-300 rounded-lg md:w-48 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                       class="flex-grow p-3 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                <select id="type-filter" class="p-3 border border-gray-300 rounded-xl md:w-48 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
                     <option value="all">All Types</option>
                     <option value="Music">Music</option>
                     <option value="Sports">Sports</option>
                     <option value="Tech">Tech Conference</option>
                     <option value="Art">Art & Culture</option>
                 </select>
-                <button onclick="applyFilters()" class="bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-150 shadow-md">
+                <button onclick="applyFilters()" class="bg-indigo-600 text-white p-3 rounded-xl font-semibold hover:bg-indigo-700 transition duration-150 shadow-md transform hover:scale-[1.01]">
                     Apply Filters
                 </button>
             </div>
 
             <!-- Tab Navigation -->
-            <div class="flex space-x-2 mb-6">
-                <button class="tab-button active p-3 rounded-t-lg font-semibold transition" data-tab="dashboard">Dashboard</button>
+            <div class="flex space-x-2 mb-6 border-b border-gray-300">
+                <button class="tab-button active p-3 rounded-t-lg font-semibold transition" data-tab="dashboard">Analytics Dashboard</button>
                 <button class="tab-button p-3 rounded-t-lg font-semibold transition" data-tab="events">Event List & Map</button>
                 <button id="admin-tab" class="tab-button hidden p-3 rounded-t-lg font-semibold transition" data-tab="admin">Admin Panel</button>
             </div>
 
             <!-- Tab Contents -->
-            <div id="dashboard-tab-content" class="tab-content">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Event Analytics</h2>
+            <div id="dashboard-tab-content" class="tab-content bg-white p-6 rounded-xl shadow-xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Real-Time Event Statistics</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-lg lg:col-span-2">
-                        <h3 class="font-bold text-lg mb-4">Event Type Distribution</h3>
-                        <canvas id="typeChart"></canvas>
+                    <div class="p-4 rounded-xl border border-gray-200 shadow-inner lg:col-span-2">
+                        <h3 class="font-bold text-lg mb-4 text-indigo-600">Event Type Distribution (Filtered View)</h3>
+                        <div style="height: 300px;"><canvas id="typeChart"></canvas></div>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h3 class="font-bold text-lg mb-4">Total Active Events</h3>
-                        <p id="total-events" class="text-6xl font-extrabold text-indigo-600">0</p>
-                        <p class="text-gray-500 mt-2">Currently being tracked in real-time.</p>
+                    <div class="p-6 rounded-xl shadow-lg bg-indigo-50 flex flex-col justify-center items-center">
+                        <h3 class="font-bold text-lg mb-2 text-indigo-800">Total Active Events</h3>
+                        <p id="total-events" class="text-7xl font-extrabold text-indigo-600 transform scale-100 transition-transform duration-500 ease-out">0</p>
+                        <p class="text-gray-600 mt-2">Currently being tracked globally.</p>
                     </div>
                 </div>
             </div>
             
-            <div id="events-tab-content" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Interactive Map & Live List</h2>
+            <div id="events-tab-content" class="tab-content hidden pt-4">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Map Section -->
-                    <div class="bg-white p-4 rounded-xl shadow-lg">
+                    <div class="p-2">
                         <div id="map"></div>
                     </div>
                     <!-- Event List -->
-                    <div class="bg-white p-4 rounded-xl shadow-lg overflow-y-auto max-h-[400px]">
-                        <h3 class="font-bold text-lg mb-3 border-b pb-2">Events Found (<span id="event-count">0</span>)</h3>
+                    <div class="bg-white p-6 rounded-xl shadow-xl overflow-y-auto max-h-[500px]">
+                        <h3 class="font-bold text-lg mb-4 border-b pb-2 text-gray-700">Live Event List (<span id="event-count">0</span> matching)</h3>
                         <div id="event-list" class="space-y-4">
                             <!-- Event cards will be dynamically inserted here -->
                         </div>
-                        <p id="no-events-msg" class="text-center text-gray-500 p-4 hidden">No events match your criteria.</p>
+                        <p id="no-events-msg" class="text-center text-gray-500 p-8 hidden text-lg font-medium">
+                            🔍 No events match your search or filter criteria. Try broadening your search.
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <div id="admin-tab-content" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-red-600 mb-4">Admin Panel (Event CRUD)</h2>
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <p class="text-sm text-red-500 mb-4 font-medium" id="admin-warning"></p>
-                    <h3 class="font-bold text-xl mb-4">Create / Update Event</h3>
-                    <form id="event-form" class="space-y-4">
-                        <input type="hidden" id="event-id-field">
-                        <input type="text" id="event-name" placeholder="Event Name" required
-                               class="w-full p-3 border rounded-lg">
-                        <textarea id="event-description" placeholder="Description" required
-                                  class="w-full p-3 border rounded-lg"></textarea>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="date" id="event-date" required class="p-3 border rounded-lg">
-                            <select id="event-type" required class="p-3 border rounded-lg">
-                                <option value="" disabled selected>Select Type</option>
-                                <option value="Music">Music</option>
-                                <option value="Sports">Sports</option>
-                                <option value="Tech">Tech Conference</option>
-                                <option value="Art">Art & Culture</option>
-                            </select>
-                            <input type="text" id="event-location" placeholder="City/Venue" required
-                                   class="p-3 border rounded-lg">
+            <!-- Admin Panel Content -->
+            <div id="admin-tab-content" class="tab-content hidden bg-white p-6 rounded-xl shadow-xl pt-4">
+                <div class="border-b pb-4 mb-6">
+                    <h2 class="text-2xl font-bold text-red-600">Admin Panel (CRUD Operations)</h2>
+                    <p class="text-sm text-red-500 font-medium mt-1" id="admin-warning">
+                        ⚠️ Admin mode is enabled. Use with caution.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Event Form -->
+                    <div class="p-4 border border-red-200 rounded-xl bg-red-50 shadow-inner">
+                        <h3 class="font-extrabold text-xl mb-4 text-red-700" id="form-title">Create New Event</h3>
+                        <form id="event-form" class="space-y-4">
+                            <input type="hidden" id="event-id-field">
+                            <input type="text" id="event-name" placeholder="Event Name" required
+                                    class="w-full p-3 border rounded-lg focus:border-red-500 focus:ring-red-500">
+                            <textarea id="event-description" placeholder="Description" required rows="3"
+                                        class="w-full p-3 border rounded-lg focus:border-red-500 focus:ring-red-500"></textarea>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <input type="date" id="event-date" required class="p-3 border rounded-lg">
+                                <select id="event-type" required class="p-3 border rounded-lg">
+                                    <option value="" disabled selected>Select Type</option>
+                                    <option value="Music">Music</option>
+                                    <option value="Sports">Sports</option>
+                                    <option value="Tech">Tech Conference</option>
+                                    <option value="Art">Art & Culture</option>
+                                </select>
+                                <input type="text" id="event-location" placeholder="City/Venue" required
+                                        class="p-3 border rounded-lg">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="number" step="any" id="event-lat" placeholder="Latitude (e.g., 51.50)" required
+                                        class="p-3 border rounded-lg">
+                                <input type="number" step="any" id="event-lng" placeholder="Longitude (e.g., -0.12)" required
+                                        class="p-3 border rounded-lg">
+                            </div>
+
+                            <button type="submit" id="form-submit-btn" class="w-full bg-red-600 text-white p-3 rounded-xl font-semibold hover:bg-red-700 transition duration-150 shadow-lg transform hover:scale-[1.01]">
+                                Add Event
+                            </button>
+                            <button type="button" onclick="resetForm()" class="w-full bg-gray-300 text-gray-800 p-3 rounded-xl font-semibold hover:bg-gray-400 transition duration-150 shadow-md">
+                                Clear Form
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Manage List -->
+                    <div>
+                        <h4 class="font-bold text-xl mb-4 text-gray-700">Manage Existing Events (<span id="admin-event-count">0</span>)</h4>
+                        <div id="admin-event-list" class="space-y-3 max-h-[500px] overflow-y-auto">
+                            <!-- Admin list will be populated here -->
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <input type="number" step="any" id="event-lat" placeholder="Latitude (e.g., 51.50)" required
-                                   class="p-3 border rounded-lg">
-                            <input type="number" step="any" id="event-lng" placeholder="Longitude (e.g., -0.12)" required
-                                   class="p-3 border rounded-lg">
-                        </div>
-                        <button type="submit" id="form-submit-btn" class="w-full bg-red-600 text-white p-3 rounded-lg font-semibold hover:bg-red-700 transition duration-150 shadow-md">
-                            Add Event
-                        </button>
-                    </form>
-                    
-                    <h4 class="font-bold text-lg mt-8 mb-3 border-t pt-4">Manage Existing Events</h4>
-                    <div id="admin-event-list" class="space-y-3">
-                        <!-- Admin list will be populated here -->
                     </div>
                 </div>
             </div>
-            
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-container" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50 p-4" onclick="if (event.target.id === 'modal-container') closeModal()">
+        <div id="modal-content" class="bg-white rounded-xl p-6 w-full max-w-lg transform transition-all shadow-2xl">
+            <!-- Modal content dynamically injected here -->
         </div>
-
-    </div>
-
-    <!-- Modals -->
-    <div id="modal-container" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden items-center justify-center z-50 p-4">
-        <!-- Modal content goes here -->
     </div>
 
     <!-- Firebase SDK Imports -->
     <script type="module">
-        // Firebase imports are needed even for mock mode to prevent runtime errors in the real logic
+        // Import Firebase functions, including runTransaction for atomic updates
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, serverTimestamp, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Set Firebase logging level for debugging
@@ -179,25 +203,25 @@
         let userId = null;
         let isAuthReady = false;
         let events = [];
-        let rsvps = [];
+        let rsvps = []; // Array of event IDs the user has RSVP'd to
         let leafletMap = null;
         let typeChart = null;
+        let activeFilters = { search: '', type: 'all' };
 
         // --- MOCK DATA FALLBACK VARIABLES ---
         let useMockData = false;
         let localEvents = [];
-        let localRsvps = [];
+        let localRsvps = []; // Array of event IDs
+        let mockIdCounter = 5; 
 
-        // Mock event data to be used if Firebase config is missing
         const MOCK_DATA = [
-            { id: 'm1', name: 'Mock Tech Summit 2025', type: 'Tech', location: 'London, UK (Mock)', lat: 51.5074, lng: -0.1278, date: new Date(Date.now() + 86400000 * 10), description: 'MOCK: The leading conference on AI and Web3.', rsvpCount: 154 },
-            { id: 'm2', name: 'Mock Summer Music Fest', type: 'Music', location: 'Paris, France (Mock)', lat: 48.8566, lng: 2.3522, date: new Date(Date.now() + 86400000 * 30), description: 'MOCK: Three days of non-stop EDM and Pop music.', rsvpCount: 98 },
-            { id: 'm3', name: 'Mock Marathon for Charity', type: 'Sports', location: 'Berlin, Germany (Mock)', lat: 52.5200, lng: 13.4050, date: new Date(Date.now() + 86400000 * 5), description: 'MOCK: Run for a cause, 42.2km route through the city.', rsvpCount: 42 },
-            { id: 'm4', name: 'Mock Modern Art Expo', type: 'Art', location: 'New York, USA (Mock)', lat: 40.7128, lng: -74.0060, date: new Date(Date.now() + 86400000 * 45), description: 'MOCK: Showcasing contemporary painters and sculptors.', rsvpCount: 77 },
+            { id: 'm1', name: 'Mock Tech Summit 2025', type: 'Tech', location: 'London, UK', lat: 51.5074, lng: -0.1278, date: new Date(Date.now() + 86400000 * 10), description: 'The leading conference on AI and Web3.', rsvpCount: 154 },
+            { id: 'm2', name: 'Mock Summer Music Fest', type: 'Music', location: 'Paris, France', lat: 48.8566, lng: 2.3522, date: new Date(Date.now() + 86400000 * 30), description: 'Three days of non-stop EDM and Pop music.', rsvpCount: 98 },
+            { id: 'm3', name: 'Mock Marathon for Charity', type: 'Sports', location: 'Berlin, Germany', lat: 52.5200, lng: 13.4050, date: new Date(Date.now() + 86400000 * 5), description: 'Run for a cause, 42.2km route through the city.', rsvpCount: 42 },
         ];
 
 
-        // --- FIREBASE PATHS (Used only if NOT using mock data) ---
+        // --- FIREBASE PATHS ---
         const getEventsCollectionPath = () => `artifacts/${appId}/public/data/events`;
         const getRsvpsCollectionPath = (uid) => `artifacts/${appId}/users/${uid}/rsvps`;
         
@@ -208,48 +232,86 @@
         const $eventList = document.getElementById('event-list');
         const $adminEventList = document.getElementById('admin-event-list');
         const $eventCount = document.getElementById('event-count');
+        const $adminEventCount = document.getElementById('admin-event-count');
         const $totalEvents = document.getElementById('total-events');
         const $adminTab = document.getElementById('admin-tab');
         const $adminWarning = document.getElementById('admin-warning');
         const $noEventsMsg = document.getElementById('no-events-msg');
+        const $modalContainer = document.getElementById('modal-container');
+        const $eventForm = document.getElementById('event-form');
+        const $formTitle = document.getElementById('form-title');
 
         // --- UTILITY FUNCTIONS ---
+        
+        const closeModal = () => {
+            $modalContainer.classList.add('hidden');
+            $modalContainer.classList.remove('flex');
+        };
+        window.closeModal = closeModal;
 
-        /** Shows a custom modal message instead of alert/confirm. */
-        const showModal = (title, message, isError = false) => {
-            const container = document.getElementById('modal-container');
-            container.innerHTML = `
-                <div class="bg-white rounded-xl p-6 w-full max-w-md transform transition-all shadow-2xl">
-                    <h3 class="text-xl font-bold ${isError ? 'text-red-600' : 'text-indigo-600'} mb-3">${title}</h3>
-                    <p class="text-gray-700 mb-4">${message}</p>
-                    <button onclick="document.getElementById('modal-container').classList.add('hidden')"
-                            class="w-full bg-gray-200 text-gray-800 p-2 rounded-lg font-semibold hover:bg-gray-300 transition duration-150">
-                        Close
+        /** Shows a custom modal message with optional action buttons. */
+        const showModal = (title, message, isError = false, action = null, actionText = 'Confirm', actionCallback = () => {}) => {
+            const $content = document.getElementById('modal-content');
+            
+            let actionButtonHtml = '';
+            if (action === 'confirm') {
+                actionButtonHtml = `
+                    <button id="modal-action-btn" class="bg-red-600 text-white p-2 rounded-lg font-semibold hover:bg-red-700 transition duration-150">
+                        ${actionText}
                     </button>
+                `;
+            }
+
+            $content.innerHTML = `
+                <h3 class="text-xl font-bold ${isError ? 'text-red-600' : 'text-indigo-600'} mb-3">${title}</h3>
+                <p class="text-gray-700 mb-4">${message}</p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeModal()"
+                            class="bg-gray-200 text-gray-800 p-2 rounded-lg font-semibold hover:bg-gray-300 transition duration-150">
+                        ${action === 'confirm' ? 'Cancel' : 'Close'}
+                    </button>
+                    ${actionButtonHtml}
                 </div>
             `;
-            container.classList.remove('hidden');
-            container.classList.add('flex');
-        };
+            
+            if (action === 'confirm') {
+                document.getElementById('modal-action-btn').addEventListener('click', () => {
+                    closeModal();
+                    actionCallback();
+                });
+            }
 
+            $modalContainer.classList.remove('hidden');
+            $modalContainer.classList.add('flex');
+        };
+        
         /** Converts Firestore timestamp or JS Date to a readable date string */
         const formatDate = (date) => {
             if (date instanceof Date) {
                 return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
             }
-            // Handle Firestore Timestamp object
             if (date && date.seconds) {
                 return new Date(date.seconds * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
             }
-            return new Date().toLocaleDateString(); // Fallback
+            return 'N/A';
         };
+
+        /** Resets the event form to the "Add Event" state. */
+        const resetForm = () => {
+            $eventForm.reset();
+            document.getElementById('event-id-field').value = '';
+            $formTitle.textContent = 'Create New Event';
+            document.getElementById('form-submit-btn').textContent = 'Add Event';
+            document.getElementById('form-submit-btn').classList.replace('bg-orange-600', 'bg-red-600');
+        };
+        window.resetForm = resetForm;
+
 
         // --- FIREBASE & AUTH SETUP (OR MOCK FALLBACK) ---
 
         /** Initializes Firebase and sets up authentication, or switches to mock data. */
         const initializeFirebase = async () => {
             try {
-                // Check if config is invalid (e.g., empty object)
                 if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.projectId) {
                     console.warn("Firebase config is missing or invalid. Switching to MOCK DATA mode.");
                     useMockData = true;
@@ -258,12 +320,11 @@
                     $adminTab.classList.remove('hidden');
                     $adminWarning.textContent = 'WARNING: You are in MOCK Data Mode. Changes made here are NOT saved and will be lost on refresh.';
                     
-                    // Populate mock data immediately
                     localEvents = MOCK_DATA.map(e => ({ ...e, date: new Date(e.date) }));
                     
                     $loadingOverlay.classList.add('hidden');
                     $mainContent.classList.remove('hidden');
-                    startDataListeners(); // Will execute mock logic
+                    startDataListeners(); // Executes mock logic
                     return;
                 }
 
@@ -277,8 +338,9 @@
                     if (user) {
                         userId = user.uid;
                         $authStatus.textContent = `Status: Authenticated | User ID: ${userId.substring(0, 8)}...`;
-                        // Admin check (using a simple mock ID for demonstration purposes)
-                        if (userId === 'mock-admin-uid') {
+                        
+                        // Simple check: Show admin panel if the UID starts with 'test'
+                        if (userId.startsWith('test') || userId.startsWith('mock')) {
                             $adminTab.classList.remove('hidden');
                         } else {
                             $adminTab.classList.add('hidden');
@@ -289,7 +351,6 @@
                             startDataListeners();
                         }
                     } else {
-                        // Attempt to sign in
                         if (initialAuthToken) {
                             await signInWithCustomToken(auth, initialAuthToken);
                         } else {
@@ -302,17 +363,15 @@
             } catch (error) {
                 console.error("Initialization failed:", error);
                 $authStatus.textContent = `Status: ERROR - ${error.message}`;
-                showModal('Error', `Application setup failed: ${error.message}`, true);
+                showModal('Initialization Error', `Application setup failed. Check console for Firebase config issues. Error: ${error.message}`, true);
                 $loadingOverlay.classList.add('hidden');
             }
         };
 
         // --- DATA LISTENERS (REAL-TIME OR MOCK) ---
 
-        /** Attaches real-time listeners (Firebase) or uses mock data. */
         const startDataListeners = () => {
             if (useMockData) {
-                // MOCK MODE: Load once and refresh UI
                 events = localEvents;
                 rsvps = localRsvps;
                 applyFilters();
@@ -329,8 +388,7 @@
                     fetchedEvents.push({ id: doc.id, ...data });
                 });
                 events = fetchedEvents;
-                console.log(`[Real-Time] Fetched ${events.length} events.`);
-                applyFilters();
+                applyFilters(); // Re-render everything
                 renderDashboard();
             }, (error) => {
                 console.error("Error listening to events:", error);
@@ -343,40 +401,39 @@
                 snapshot.forEach(doc => {
                     rsvps.push(doc.data().eventId);
                 });
-                console.log(`[Real-Time] User has RSVP'd to ${rsvps.length} events.`);
-                if (document.getElementById('events-tab-content').classList.contains('active')) {
-                    applyFilters();
-                }
+                applyFilters(); // Re-render to update RSVP button state
             }, (error) => {
                 console.error("Error listening to RSVPs:", error);
             });
         };
 
         // --- MAP FUNCTIONS ---
-        // (Map functions remain the same as they operate on the `events` array)
-
+        
         /** Initializes the Leaflet map. */
         const initMap = () => {
+            const mapElement = document.getElementById('map');
+            if (typeof L === 'undefined' || !mapElement) return;
+
             if (leafletMap) {
                 leafletMap.remove();
             }
-            leafletMap = L.map('map').setView([51.505, -0.09], 10);
+            // Set initial view to a central global location
+            leafletMap = L.map('map').setView([30, 0], 2); 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(leafletMap);
         };
-
+        
         /** Renders event markers on the map based on the filtered list. */
         const renderMap = (filteredEvents) => {
-            if (!leafletMap) initMap();
-            
+            if (typeof L === 'undefined') return;
+
+            // Clear existing markers
             leafletMap.eachLayer((layer) => {
                 if (layer instanceof L.Marker) {
                     leafletMap.removeLayer(layer);
                 }
             });
-
-            if (filteredEvents.length === 0) return;
 
             const markers = [];
             filteredEvents.forEach(event => {
@@ -392,29 +449,37 @@
                 const group = new L.featureGroup(markers);
                 leafletMap.fitBounds(group.getBounds().pad(0.5));
             } else {
-                leafletMap.setView([51.505, -0.09], 10);
+                // If no markers, reset map view
+                leafletMap.setView([30, 0], 2);
             }
         };
 
         // --- UI RENDERING & FILTERING ---
 
-        /** Filters events based on user input. */
+        /** Filters events based on user input (exposed globally). */
         window.applyFilters = () => {
             const searchQuery = document.getElementById('search-input').value.toLowerCase();
             const typeFilter = document.getElementById('type-filter').value;
+            
+            activeFilters.search = searchQuery;
+            activeFilters.type = typeFilter;
 
             let filteredEvents = events.filter(event => {
-                const nameMatch = event.name.toLowerCase().includes(searchQuery);
-                const descMatch = (event.description || '').toLowerCase().includes(searchQuery);
-                const typeMatch = (typeFilter === 'all' || event.type === typeFilter);
+                const nameMatch = event.name.toLowerCase().includes(activeFilters.search);
+                const descMatch = (event.description || '').toLowerCase().includes(activeFilters.search);
+                
+                // Only filter by type if not set to 'all'
+                const typeMatch = (activeFilters.type === 'all' || event.type === activeFilters.type);
+                
                 return (nameMatch || descMatch) && typeMatch;
             });
 
-            // Ensure sorting works on both Date objects (mock) and Firestore Timestamps
+            // Sort by Date (latest first)
             filteredEvents.sort((a, b) => {
                 const dateA = a.date instanceof Date ? a.date.getTime() : a.date.seconds * 1000;
                 const dateB = b.date instanceof Date ? b.date.getTime() : b.date.seconds * 1000;
-                return dateA - dateB;
+                // Sort descending (latest date first)
+                return dateB - dateA;
             });
 
             renderEvents(filteredEvents);
@@ -428,47 +493,50 @@
         const renderEvents = (filteredEvents) => {
             $eventList.innerHTML = '';
             $adminEventList.innerHTML = '';
+            $adminEventCount.textContent = filteredEvents.length;
             
             filteredEvents.forEach(event => {
                 const isRsvped = rsvps.includes(event.id);
-                const buttonClass = isRsvped ? 'bg-green-500 hover:bg-green-600' : 'bg-indigo-500 hover:bg-indigo-600';
-                const buttonText = isRsvped ? 'RSVP Confirmed' : 'RSVP Now';
+                const buttonClass = isRsvped ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700';
+                const buttonText = isRsvped ? 'Confirmed' : 'RSVP Now';
+                const buttonIcon = isRsvped ? '✔' : '👤';
+
                 const userActionsHtml = `
                     <button data-event-id="${event.id}" data-rsvped="${isRsvped}"
                             onclick="handleRsvp(this)"
-                            class="text-sm font-medium text-white px-3 py-1 rounded-full transition ${buttonClass}">
-                        ${buttonText}
+                            class="text-sm font-medium text-white px-3 py-2 rounded-full transition shadow-md ${buttonClass}">
+                        ${buttonIcon} ${buttonText}
                     </button>
                 `;
 
-                // Event List Card
+                // Event List Card (Dashboard/Events Tab)
                 const eventCard = document.createElement('div');
-                eventCard.className = 'p-4 border border-gray-100 rounded-lg shadow-sm hover:shadow-md transition duration-200 bg-white';
+                eventCard.className = 'p-4 border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition duration-200 bg-white';
                 eventCard.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <h4 class="text-xl font-semibold text-gray-800">${event.name}</h4>
                             <p class="text-sm text-indigo-600 font-medium">${event.type} | ${event.location || 'Global'}</p>
                         </div>
-                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-gray-100">${formatDate(event.date)}</span>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-100 text-indigo-800">${formatDate(event.date)}</span>
                     </div>
-                    <p class="text-gray-600 mb-3 text-sm">${event.description.substring(0, 100)}...</p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-500">${event.rsvpCount || 0} RSVPs</span>
+                    <p class="text-gray-600 mb-3 text-sm">${event.description.substring(0, 150)}${event.description.length > 150 ? '...' : ''}</p>
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                        <span class="text-sm text-gray-500 font-semibold">${event.rsvpCount || 0} People Attending</span>
                         ${userActionsHtml}
                     </div>
                 `;
                 $eventList.appendChild(eventCard);
 
-                // Admin List Card (shown in both real and mock admin modes)
+                // Admin List Card
                 if ($adminTab.classList.contains('flex') || useMockData) {
                     const adminCard = document.createElement('div');
-                    adminCard.className = 'p-3 border border-red-100 rounded-lg bg-red-50 flex justify-between items-center';
+                    adminCard.className = 'p-3 border border-red-200 rounded-lg bg-red-50 flex justify-between items-center shadow-md';
                     adminCard.innerHTML = `
                         <span class="font-medium text-gray-800 truncate">${event.name}</span>
-                        <div>
-                            <button onclick="editEvent('${event.id}')" class="text-sm text-blue-600 hover:text-blue-800 mr-2">Edit</button>
-                            <button onclick="deleteEvent('${event.id}', '${event.name}')" class="text-sm text-red-600 hover:text-red-800">Delete</button>
+                        <div class="flex space-x-2">
+                            <button onclick="editEvent('${event.id}')" class="text-sm text-blue-600 font-semibold hover:text-blue-800 transition">Edit</button>
+                            <button onclick="deleteEvent('${event.id}', '${event.name}')" class="text-sm text-red-600 font-semibold hover:text-red-800 transition">Delete</button>
                         </div>
                     `;
                     $adminEventList.appendChild(adminCard);
@@ -480,7 +548,7 @@
         const renderDashboard = () => {
             $totalEvents.textContent = events.length;
             
-            // Calculate Type Distribution Data
+            // Calculate Type Distribution Data (uses ALL events for global view)
             const typeCounts = events.reduce((acc, event) => {
                 acc[event.type] = (acc[event.type] || 0) + 1;
                 return acc;
@@ -488,7 +556,7 @@
 
             const labels = Object.keys(typeCounts);
             const data = Object.values(typeCounts);
-            const colors = ['#4f46e5', '#f59e0b', '#10b981', '#ef4444', '#3b82f6'];
+            const colors = ['#4f46e5', '#f59e0b', '#10b981', '#ef4444', '#3b82f6']; // Indigo, Amber, Emerald, Red, Blue
 
             if (typeChart) {
                 typeChart.destroy();
@@ -502,26 +570,26 @@
                     datasets: [{
                         data: data,
                         backgroundColor: colors.slice(0, labels.length),
-                        hoverOffset: 4
+                        hoverOffset: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'top' },
+                        legend: { position: 'right' },
                         title: { display: false }
                     }
                 }
             });
         };
 
-        // --- RSVP SYSTEM (WRITE OPERATIONS - REAL OR MOCK) ---
+        // --- RSVP SYSTEM (ATOMIC WRITE OPERATIONS - REAL OR MOCK) ---
 
-        /** Handles RSVP creation and deletion. */
+        /** Handles RSVP creation and deletion (exposed globally). */
         window.handleRsvp = async (button) => {
             if (!userId) {
-                showModal('Authentication Required', 'Please wait for authentication to complete before RSVPing.', true);
+                showModal('Authentication Pending', 'Please wait for authentication to complete before RSVPing.', true);
                 return;
             }
 
@@ -546,26 +614,32 @@
                     }
                     // Manually refresh UI in mock mode
                     events = localEvents;
+                    rsvps = localRsvps; // Update global state
                     applyFilters();
                     renderDashboard();
                 } else {
-                    // --- REAL FIREBASE LOGIC ---
+                    // --- REAL FIREBASE ATOMIC TRANSACTION LOGIC (Professional Fix) ---
                     const eventRef = doc(db, getEventsCollectionPath(), eventId);
                     const rsvpRef = doc(db, getRsvpsCollectionPath(userId), eventId);
 
-                    if (isRsvped) {
-                        await deleteDoc(rsvpRef);
-                        await updateDoc(eventRef, {
-                            rsvpCount: Math.max(0, (events.find(e => e.id === eventId)?.rsvpCount || 1) - 1)
-                        });
-                        showModal('RSVP Cancelled', `You have successfully cancelled your RSVP for event ID: ${eventId}.`);
-                    } else {
-                        await setDoc(rsvpRef, { eventId, userId, rsvpDate: serverTimestamp() });
-                        await updateDoc(eventRef, {
-                            rsvpCount: ((events.find(e => e.id === eventId)?.rsvpCount || 0) + 1)
-                        });
-                        showModal('RSVP Confirmed!', `You have successfully RSVP'd for event ID: ${eventId}. See you there!`);
-                    }
+                    await runTransaction(db, async (transaction) => {
+                        const eventDoc = await transaction.get(eventRef);
+                        if (!eventDoc.exists()) {
+                            throw "Event does not exist!";
+                        }
+                        
+                        const newCount = (eventDoc.data().rsvpCount || 0) + (isRsvped ? -1 : 1);
+
+                        if (isRsvped) {
+                            transaction.delete(rsvpRef);
+                            transaction.update(eventRef, { rsvpCount: Math.max(0, newCount) });
+                            showModal('RSVP Cancelled', `You have successfully cancelled your RSVP.`);
+                        } else {
+                            transaction.set(rsvpRef, { eventId, userId, rsvpDate: serverTimestamp() });
+                            transaction.update(eventRef, { rsvpCount: newCount });
+                            showModal('RSVP Confirmed!', `You have successfully RSVP'd!`);
+                        }
+                    });
                 }
             } catch (error) {
                 console.error("Error handling RSVP:", error);
@@ -575,9 +649,9 @@
             }
         };
 
-        // --- ADMIN CRUD FUNCTIONS (REAL OR MOCK) ---
+        // --- ADMIN CRUD FUNCTIONS ---
 
-        /** Fills the form for editing an event. */
+        /** Fills the form for editing an event (exposed globally). */
         window.editEvent = (eventId) => {
             const event = events.find(e => e.id === eventId);
             if (!event) return;
@@ -585,10 +659,10 @@
             document.querySelector('[data-tab="admin"]').click();
             
             document.getElementById('event-id-field').value = event.id;
-            document.getElementById('event-name').value = event.name.replace('[MOCK]', '').trim();
-            document.getElementById('event-description').value = event.description.replace('[MOCK]', '').trim();
+            document.getElementById('event-name').value = event.name.replace(' [MOCK]', '').trim();
+            document.getElementById('event-description').value = event.description.replace(' [MOCK]', '').trim();
             document.getElementById('event-type').value = event.type;
-            document.getElementById('event-location').value = event.location.replace('(Mock)', '').trim();
+            document.getElementById('event-location').value = event.location.replace(' (Mock)', '').trim();
             document.getElementById('event-lat').value = event.lat;
             document.getElementById('event-lng').value = event.lng;
 
@@ -597,12 +671,13 @@
             const dateString = dateValue.toISOString().split('T')[0];
             document.getElementById('event-date').value = dateString;
 
+            $formTitle.textContent = 'Update Existing Event';
             document.getElementById('form-submit-btn').textContent = 'Update Event';
             document.getElementById('form-submit-btn').classList.replace('bg-red-600', 'bg-orange-600');
         };
 
         /** Handles event form submission (Add or Update - Real or Mock). */
-        document.getElementById('event-form').addEventListener('submit', async (e) => {
+        $eventForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const eventId = document.getElementById('event-id-field').value;
@@ -613,7 +688,8 @@
                 description: document.getElementById('event-description').value,
                 type: document.getElementById('event-type').value,
                 location: document.getElementById('event-location').value,
-                date: new Date(document.getElementById('event-date').value),
+                // Ensure date is saved as a Date object or Timestamp
+                date: new Date(document.getElementById('event-date').value), 
                 lat: parseFloat(document.getElementById('event-lat').value),
                 lng: parseFloat(document.getElementById('event-lng').value),
             };
@@ -623,27 +699,22 @@
 
             try {
                 if (useMockData) {
+                    const mockName = eventData.name + ' [MOCK]';
+                    const mockLocation = eventData.location + ' (Mock)';
                     if (isUpdating) {
-                        // Mock Update Operation
                         const index = localEvents.findIndex(e => e.id === eventId);
                         if (index !== -1) {
-                            localEvents[index] = { ...localEvents[index], ...eventData, name: eventData.name + ' [MOCK]', location: eventData.location + ' (Mock)' };
+                            localEvents[index] = { ...localEvents[index], ...eventData, name: mockName, location: mockLocation };
                             showModal('Update Success', `[MOCK] Event "${eventData.name}" updated successfully!`);
                         }
                     } else {
-                        // Mock Add Operation
-                        const newId = 'm' + (localEvents.length + 1);
-                        localEvents.push({
-                            id: newId, ...eventData, rsvpCount: 0, name: eventData.name + ' [MOCK]', location: eventData.location + ' (Mock)'
-                        });
+                        const newId = 'm' + mockIdCounter++;
+                        localEvents.push({ id: newId, ...eventData, rsvpCount: 0, name: mockName, location: mockLocation });
                         showModal('Creation Success', `[MOCK] Event "${eventData.name}" added successfully!`);
                     }
-                    // Manually trigger refresh
                     events = localEvents;
                     applyFilters();
-
                 } else {
-                    // --- REAL FIREBASE LOGIC ---
                     if (isUpdating) {
                         const docRef = doc(db, getEventsCollectionPath(), eventId);
                         await updateDoc(docRef, { ...eventData, date: serverTimestamp() });
@@ -651,7 +722,7 @@
                     } else {
                         await addDoc(collection(db, getEventsCollectionPath()), {
                             ...eventData,
-                            date: serverTimestamp(), // Save as server timestamp
+                            date: serverTimestamp(),
                             rsvpCount: 0,
                             createdAt: serverTimestamp()
                         });
@@ -659,11 +730,7 @@
                     }
                 }
                 
-                // Reset form
-                document.getElementById('event-form').reset();
-                document.getElementById('event-id-field').value = '';
-                document.getElementById('form-submit-btn').textContent = 'Add Event';
-                document.getElementById('form-submit-btn').classList.replace('bg-orange-600', 'bg-red-600');
+                resetForm();
 
             } catch (error) {
                 console.error("Error submitting event:", error);
@@ -673,9 +740,9 @@
             }
         });
 
-        /** Deletes an event document (Real or Mock). */
+        /** Deletes an event document (Real or Mock - exposed globally). */
         window.deleteEvent = async (eventId, eventName) => {
-            showModal('Confirm Deletion', `Are you sure you want to delete the event: "${eventName}"? This action cannot be undone.`, false, async () => {
+            const performDelete = async () => {
                 try {
                     if (useMockData) {
                         localEvents = localEvents.filter(e => e.id !== eventId);
@@ -690,48 +757,21 @@
                     console.error("Error deleting event:", error);
                     showModal('Deletion Error', `Failed to delete event: ${error.message}`, true);
                 }
-            });
-            // Overriding modal content for confirmation box
-            document.getElementById('modal-container').querySelector('.bg-white').innerHTML = `
-                <h3 class="text-xl font-bold text-red-600 mb-3">Confirm Deletion</h3>
-                <p class="text-gray-700 mb-4">Are you sure you want to delete the event: "${eventName}"? This action cannot be undone.</p>
-                <div class="flex justify-end space-x-3">
-                    <button onclick="document.getElementById('modal-container').classList.add('hidden')"
-                            class="bg-gray-200 text-gray-800 p-2 rounded-lg font-semibold hover:bg-gray-300 transition duration-150">
-                        Cancel
-                    </button>
-                    <button onclick="performDeleteConfirmed('${eventId}', '${eventName}')"
-                            class="bg-red-600 text-white p-2 rounded-lg font-semibold hover:bg-red-700 transition duration-150">
-                        Yes, Delete
-                    </button>
-                </div>
-            `;
+            };
             
+            showModal(
+                'Confirm Deletion', 
+                `Are you sure you want to permanently delete the event: "${eventName}"?`, 
+                true, // Use error styling for caution
+                'confirm', 
+                'Yes, Delete It',
+                performDelete
+            );
         };
-
-        // Helper function to handle the actual deletion after confirmation
-        window.performDeleteConfirmed = async (eventId, eventName) => {
-            document.getElementById('modal-container').classList.add('hidden');
-            try {
-                if (useMockData) {
-                    localEvents = localEvents.filter(e => e.id !== eventId);
-                    events = localEvents;
-                    applyFilters();
-                    showModal('Deletion Success', `[MOCK] Event "${eventName}" was deleted successfully.`);
-                } else {
-                    await deleteDoc(doc(db, getEventsCollectionPath(), eventId));
-                    showModal('Deletion Success', `Event "${eventName}" was deleted successfully.`);
-                }
-            } catch (error) {
-                console.error("Error deleting event:", error);
-                showModal('Deletion Error', `Failed to delete event: ${error.message}`, true);
-            }
-        }
 
 
         // --- UI NAVIGATION LOGIC ---
 
-        /** Handles tab switching. */
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', (e) => {
                 const targetTab = e.target.getAttribute('data-tab');
@@ -743,8 +783,9 @@
                 document.getElementById(`${targetTab}-tab-content`).classList.remove('hidden');
 
                 if (targetTab === 'events' && leafletMap) {
-                    // Necessary to fix map rendering when changing tab visibility
+                    // Fix map rendering when switching tabs
                     setTimeout(() => { leafletMap.invalidateSize(); }, 0);
+                    renderMap(events); // Re-render markers if events are filtered
                 }
             });
         });
@@ -755,11 +796,6 @@
             initMap();
         };
 
-        // Expose functions globally for HTML access
-        window.applyFilters = applyFilters;
-        window.handleRsvp = handleRsvp;
-        window.editEvent = editEvent;
-        window.deleteEvent = deleteEvent;
     </script>
 </body>
 </html>
